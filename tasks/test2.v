@@ -1,105 +1,44 @@
-module testbench5 ;
-reg [31:0] A ;
+module vending_machine ( output dispense,change,
+                         input d_in,q_in,clk,rst);
+  parameter wait = 2'b00;
+  parameter q_25 = 2'b01;
+  parameter q_50 = 2'b10;
 
-initial 
-begin 
-$monitor ( $time ,, "%d  %b  %h",A,A,A);
-A = 1101;
-#5
-A = 32 'b 1101;
-#5
-A = 32 'h AAAAA;
-end
-endmodule 
+  reg [1:0] cs,ns;
+  always @(posedge clk , negedge rst) begin
+    if (!rst)
+       cs <= wait;
+    else 
+       cs <= ns;  
+  end  
+  always @(*) begin
+    case (cs)
+        wait   : begin
+                 if (d_in) 
+                    ns = wait;
+                 else if (q_in)
+                    ns = q_25;
+                 end
+        q_25   : begin
+                  if (q_in)
+                    ns = q_50;
+                 end  
+        q_50   : begin
+                  if (q_in)
+                    ns = wait;
+                 end                     
+        default: ns = wait;
+    endcase
+  end
+  assign dispense = (cs==wait && d_in==1 || cs==q_50 && q_in==1) ? 1'b1 : 1'b0;
+  assign change = (cs==wait && d_in==1) ? 1'b1 : 1'b0;
+  
+    
+endmodule
 
-//////////////////////////////////////
+module vending_machine_ts ();
+wire dispense,change;
+reg d_in,q_in,clk,rst;
 
-module testbench6 ;
-reg A,B;
-reg [13:0] C ;
-reg [16:0] D ;
-
-initial 
-begin
-$monitor ("%b  %b  %b  %b",A,B,C,D);
-A = 0;
-B = 1;
-C = 14 'b 1101;
-D = {B , C[3:0] , {3{A}}};
-end
-endmodule 
-
-///////////////////////////////////////////
-
-module testbench7 ;
-reg A,B;
-reg [13:0] C ;
-reg [16:0] D ;
-initial 
-begin
-$monitor ("%b  %b  %b  %b",A,B,C,D);
-A = 0;
-B = 1;
-C = 14 'b 1101001001;
-D = (A == B) ? C : 20;
-end
-endmodule 
-
-///////////////////////////////////
-
-module testbench8 ;
-reg A,B;
-reg [13:0] C ;
-reg [16:0] D ;
-initial 
-begin
-$monitor ("%d  %d  %d  %d",A,B,C,D);
-A = 0;
-B = 1;
-C = 5;
-case (C)
-10 : D = 14;
-15 : D = 15;
-default : D = 10;
-endcase
-end
-endmodule 
-
-///////////////////////////////////
-
-module testbench9 ;
-reg A,B;
-reg [16:0] C ;
-reg [16:0] D ;
- 
-initial 
-begin
-$monitor ("%d  %d  %d  %d",A,B,C,D);
-A = 0;
-B = 1;
-C = 14 'b 1100110011xx1;
-D = 14 'b 1100110011xx1;
-D = (C === D) ? 30 : 20;
-end
-endmodule 
-
-/////////////////////////////////
-
-module testbench10 ;
-reg A,B;
-reg [15:0] C ;
-reg [15:0] D ;
-
-initial 
-begin 
-$monitor ("%d  %d  %d  %d",A,B,C,D);
-#5
-A = 5;
-B = 10;
-#10
-A = 10;
-B = 15;
-end
-endmodule 
-
-//////////////////////////////////
+vending_machine r (dispense,change,d_in,q_in,clk,rst);
+endmodule
